@@ -12,12 +12,11 @@ void setup() {
 boolean isAllowedMSISDN(String msisdn) {
   uint8_t size = sizeof(controlMSISDN) / sizeof(controlMSISDN[0]);
   for (uint8_t c = 0; c < size; c++) {
-    Serial.print(msisdn);
-    Serial.print(" compare with ");
-    Serial.print(controlMSISDN[c]);
-    Serial.print(" = ");
-    Serial.println(msisdn.equals(controlMSISDN[c]));
+    if (msisdn.equals(controlMSISDN[c])) {
+      return true;
+    }
   }
+  return false;
 }
 
 
