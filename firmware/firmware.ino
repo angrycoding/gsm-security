@@ -13,6 +13,9 @@ void setup() {
 void loop() {
 	switch (SIM800::update()) {
 
+		// case SIM800::MSG_OK
+		// case SIM800::MSG_FAIL
+
 		case SIM800::CALL:
 			//
 			if (isEnabled = !isEnabled) {
