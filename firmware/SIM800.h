@@ -2,8 +2,6 @@
 #define SIM800_h
 
 #include <SoftwareSerial.h>
-// perhaps that has to be removed in nodemcu
-#include <Arduino.h>
 
 namespace SIM800_private {
 
@@ -206,6 +204,8 @@ namespace SIM800 {
 		sendATCommand("AT+CMGF=0");
 		sendATCommand("AT+CMGS=" + (String)PDUlen);
 		sendATCommand(PDUPack + (String)((char)26));
+    sendATCommand((String)((char)26));
+    sendATCommand("AT+CMGF=1");
 	}
 
 	uint8_t update() {
@@ -236,7 +236,7 @@ namespace SIM800 {
 		else if (request.startsWith("+cmt:\"")) {
 			msisdn = request.substring(6, request.indexOf('"', 6));
 			text = request.substring(request.lastIndexOf('"') + 1);
-			if (msisdn.length() >  12 && text.length() > 0) {
+			if (msisdn.length() >=  12 && text.length() > 0) {
 				status = SMS;
 			}
 		}
