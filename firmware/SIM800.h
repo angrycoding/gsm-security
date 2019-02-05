@@ -160,12 +160,12 @@ namespace SIM800 {
 		request.replace(" ", "");
 
 		if (request.startsWith("ring")) {
+			sendATCommand("AT+CHUP");
 			request = request.substring(4);
 			if (request.startsWith("+clip:\"")) {
 				msisdn = request.substring(7, request.indexOf('"', 7));
 				if (msisdn.length() >= 12) status = CALL;
 			}
-			sendATCommand("AT+CHUP");
 		}
 
 		else if (request.startsWith("+cmt:\"")) {
