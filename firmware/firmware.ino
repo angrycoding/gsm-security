@@ -35,8 +35,6 @@ void loop() {
 		case SIM800::SMS:
       if (!isAllowedMSISDN(SIM800::msisdn)) break;
       Serial.print("SMS = ");
-      Serial.print(SIM800::msisdn);
-      Serial.print(" : ");
       Serial.println(SIM800::text);
 			break;
 
