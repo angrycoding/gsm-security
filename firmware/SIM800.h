@@ -113,6 +113,65 @@ namespace SIM800_private {
 
 }
 
+/*
+
+namespace SIM800_async {
+
+	uint8_t reserved = 0;
+	uint8_t count = 0;
+	String** values = NULL;
+
+	uint8_t state = 0;
+
+	void pushATCommand(String value) {
+		if (reserved < ++count) {
+			String** buffer = new String*[count];
+			memcpy(buffer, values, (count - 1) * sizeof(String*));
+			delete[] values, values = buffer;
+		}
+		values[count - 1] = value;
+	}
+
+	String shiftATCommand() {
+		if (!count) return "";
+		String** buffer = new String*[count -= 1];
+		memcpy(buffer, &values[1], count * sizeof(String*));
+		String result(values[0]);
+		delete values[0];
+		delete [] values, values = buffer;
+		return result;
+	}
+
+
+	void init() {
+		pushATCommand("ATE0");
+		pushATCommand("AT");
+		pushATCommand("AT+CMGF=1");
+		pushATCommand("AT+CNMI=1, 2, 0, 0, 0");
+		pushATCommand("AT+CLIP=1");
+	}
+
+
+	void update() {
+
+
+		if (state == 0 && count > 0) {
+			String cmd = shiftATCommand();
+			sim800->println(cmd);
+			state = 1;
+		}
+
+		else if (state == 1 && sim800->available()) {
+			response = sim800->readString();
+		}
+
+	}
+
+
+}*/
+
+
+
 
 namespace SIM800 {
 
@@ -143,7 +202,7 @@ namespace SIM800 {
 		String *ptrPDUPack = &PDUPack;
 		int PDUlen = 0;
 		int *ptrPDUlen = &PDUlen;
-		getPDUPack(ptrphone, ptrmessage, ptrPDUPack, ptrPDUlen); 
+		getPDUPack(ptrphone, ptrmessage, ptrPDUPack, ptrPDUlen);
 		sendATCommand("AT+CMGF=0");
 		sendATCommand("AT+CMGS=" + (String)PDUlen);
 		sendATCommand(PDUPack + (String)((char)26));
@@ -151,6 +210,10 @@ namespace SIM800 {
 
 	uint8_t update() {
 		using namespace SIM800_private;
+
+
+
+
 		if (!sim800->available()) return 0;
 		
 		uint8_t status = 0;
