@@ -2,33 +2,35 @@
 #define SIM800_h
 
 #include <SoftwareSerial.h>
+// perhaps that has to be removed in nodemcu
+#include <Arduino.h>
 
 namespace SIM800_private {
 
 	SoftwareSerial *sim800;
 
-	String sendATCommand(String cmd) {
-		Serial.print("REQUEST = ");
-		Serial.println(cmd);
-		sim800.println(cmd);
-		String response = waitResponse();
-		Serial.print("RESPONSE = ");
-		Serial.println(response);
-		return response;
-	}
-
 	String waitResponse() {
 		String response = "";
 		long timeout = millis() + 10000; 
-		while (!gsm.available() && millis() < timeout);
-		if (gsm.available()) {
-			response = gsm.readString();
+		while (!sim800->available() && millis() < timeout);
+		if (sim800->available()) {
+			response = sim800->readString();
 			response.trim();
 			response.toLowerCase();
 			response.replace("\n", "");
 			response.replace("\r", "");
 			response.replace(" ", "");
 		}
+		return response;
+	}
+
+	String sendATCommand(String cmd) {
+		Serial.print("REQUEST = ");
+		Serial.println(cmd);
+		sim800->println(cmd);
+		String response = waitResponse();
+		Serial.print("RESPONSE = ");
+		Serial.println(response);
 		return response;
 	}
 
@@ -39,6 +41,28 @@ namespace SIM800_private {
 			}
 		}
 		return 1;
+	}
+
+	unsigned int symbolToUInt(const String& bytes) {
+		unsigned int charSize = bytes.length();
+		unsigned int result = 0;
+		if (charSize == 1) return bytes[0];
+		unsigned char actualByte = bytes[0];
+		result = actualByte & (0xFF >> (charSize + 1));
+		result = result << (6 * (charSize - 1));
+		for (int i = 1; i < charSize; i++) {
+			actualByte = bytes[i];
+			if ((actualByte >> 6) != 2) return 0;
+			result |= ((actualByte & 0x3F) << (6 * (charSize - 1 - i)));
+		}
+		return result;
+	}
+
+	String byteToHexString(uint8_t i) {
+		String hex = String(i, HEX);
+		if (hex.length() == 1) hex = "0" + hex;
+		hex.toUpperCase();
+		return hex;
 	}
 
 	String StringToUCS2(String s) {
@@ -55,11 +79,23 @@ namespace SIM800_private {
 		return result;
 	}
 
-	String byteToHexString(byte i) {
-		String hex = String(i, HEX);
-		if (hex.length() == 1) hex = "0" + hex;
-		hex.toUpperCase();
-		return hex;
+	String getDAfield(String *phone, bool fullnum) {
+		String result = "";
+		for (int i = 0; i <= (*phone).length(); i++) {
+			if (isDigit((*phone)[i])) {
+				result += (*phone)[i];
+			}
+		}
+		uint8_t phonelen = result.length();
+		if (phonelen % 2 != 0) result += "F";
+		for (int i = 0; i < result.length(); i += 2) {
+			char symbol = result[i + 1];
+			result = result.substring(0, i + 1) + result.substring(i + 2);
+			result = result.substring(0, i) + (String)symbol + result.substring(i);
+		}
+		result = fullnum ? "91" + result : "81" + result;
+		result = byteToHexString(phonelen) + result;
+		return result;
 	}
 
 	void getPDUPack(String *phone, String *message, String *result, int *PDUlen) {
@@ -73,40 +109,6 @@ namespace SIM800_private {
 		*result += msg;
 		*PDUlen = (*result).length() / 2;
 		*result = "00" + *result;
-	}
-
-	String getDAfield(String *phone, bool fullnum) {
-		String result = "";
-		for (int i = 0; i <= (*phone).length(); i++) {
-			if (isDigit((*phone)[i])) {
-				result += (*phone)[i];
-			}
-		}
-		int phonelen = result.length();
-		if (phonelen % 2 != 0) result += "F";
-		for (int i = 0; i < result.length(); i += 2) {
-			char symbol = result[i + 1];
-			result = result.substring(0, i + 1) + result.substring(i + 2);
-			result = result.substring(0, i) + (String)symbol + result.substring(i);
-		}
-		result = fullnum ? "91" + result : "81" + result;
-		result = byteToHexString(phonelen) + result;
-		return result;
-	}
-
-	unsigned int symbolToUInt(const String& bytes) {
-		unsigned int charSize = bytes.length();
-		unsigned int result = 0;
-		if (charSize == 1) return bytes[0];
-		unsigned char actualByte = bytes[0];
-		result = actualByte & (0xFF >> (charSize + 1));
-		result = result << (6 * (charSize - 1));
-		for (int i = 1; i < charSize; i++) {
-			actualByte = bytes[i];
-			if ((actualByte >> 6) != 2) return 0;
-			result |= ((actualByte & 0x3F) << (6 * (charSize - 1 - i)));
-		}
-		return result;
 	}
 
 }
@@ -125,7 +127,7 @@ namespace SIM800 {
 	void init(uint32_t speed, uint8_t PIN_RX, uint8_t PIN_TX) {
 		using namespace SIM800_private;
 		sim800 = new SoftwareSerial(PIN_RX, PIN_TX);
-		sim800.begin(speed);
+		sim800->begin(speed);
 		sendATCommand("ATE0");
 		sendATCommand("AT");
 		sendATCommand("AT+CMGF=1");
@@ -149,10 +151,10 @@ namespace SIM800 {
 
 	uint8_t update() {
 		using namespace SIM800_private;
-		if (!sim800.available()) return 0;
+		if (!sim800->available()) return 0;
 		
 		uint8_t status = 0;
-		String request = sim800.readString();
+		String request = sim800->readString();
 		request.trim();
 		request.toLowerCase();
 		request.replace("\n", "");
