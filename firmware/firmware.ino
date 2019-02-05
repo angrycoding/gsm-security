@@ -15,7 +15,7 @@ void loop() {
 
 		case SIM800::CALL:
 			//
-			if (isEnabled) {
+			if (isEnabled = !isEnabled) {
 				SIM800::sendSMS(SIM800::msisdn, "включено");
 			} else {
 				SIM800::sendSMS(SIM800::msisdn, "выключено");
