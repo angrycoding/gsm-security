@@ -24,9 +24,8 @@ boolean isAllowedMSISDN(String msisdn) {
 void loop() {
 	switch (SIM800::update()) {
 
-    if (!isAllowedMSISDN(SIM800::msisdn)) break;
-
 		case SIM800::CALL:
+      if (!isAllowedMSISDN(SIM800::msisdn)) break;
   		if (isEnabled = !isEnabled) {
 				SIM800::sendSMS(SIM800::msisdn, "включено");
 			} else {
@@ -35,6 +34,7 @@ void loop() {
 			break;
 
 		case SIM800::SMS:
+      if (!isAllowedMSISDN(SIM800::msisdn)) break;
       Serial.print("SMS = ");
       Serial.print(SIM800::msisdn);
       Serial.print(" : ");
