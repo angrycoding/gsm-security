@@ -3,9 +3,11 @@
 boolean isSecurityEnabled = false;                         // переменная для хранения состояния охраны
 char* controlMSISDN[] = {"+79260617034", "+79190148644"};  // текстовая переменная с номерами телефонов  
 
-// -------Если включено MSISDN????--------
-// что происходит в этой функции????? 
-boolean isAllowedMSISDN(String msisdn) {
+
+// функция сверки номера телефона звонящего (приславшего)СМС
+// с номерами телефона из списка, если номер телефона есть в списке, то
+// присваивается true, если нет, то false
+boolean isAllowedMSISDN(String msisdn) {    
 	uint8_t size = sizeof(controlMSISDN) / sizeof(controlMSISDN[0]);
 	for (uint8_t c = 0; c < size; c++) {
 		if (msisdn.equals(controlMSISDN[c])) {
@@ -50,7 +52,7 @@ void loop() {
 	switch (SIM800::update()) {                      // если от модуля что-то пришло
 
 		case SIM800::CALL:                             // если это звонок, то
-			if (!isAllowedMSISDN(SIM800::msisdn)) break; // что здесь происходит?????
+			if (!isAllowedMSISDN(SIM800::msisdn)) break; // проверка номера, есть ли он в списке, если нет - выход
 			if (isSecurityEnabled) {
 				disableSecurity(SIM800::msisdn);
 			} else {
@@ -59,7 +61,7 @@ void loop() {
 			break;
 
 		case SIM800::SMS:                                 // если это СМС то
-			if (!isAllowedMSISDN(SIM800::msisdn)) break;   // что здесь происходит?????
+			if (!isAllowedMSISDN(SIM800::msisdn)) break;   // проверка номера, есть ли он в списке, если нет - выход
 			if (SIM800::text.equals("1")) {                // если текст смс "1"
 				enableSecurity(SIM800::msisdn);              // включить охрану
 			} else if (SIM800::text.equals("0")) {         // если текст смс "0"
