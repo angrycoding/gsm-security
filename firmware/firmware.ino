@@ -16,25 +16,25 @@ boolean isAllowedMSISDN(String msisdn) {
 //-------- включение охраны------
 void enableSecurity(String responseMSISDN) {
 	if (isSecurityEnabled) {
-		SIM800::sendSMS(responseMSISDN, "охрана уже включена");
+		SIM800::sendSMS(responseMSISDN, "охрана уже включена"); // ответная СМС
 		return;
 	}
 	isSecurityEnabled = true;
-	SIM800::sendSMS(responseMSISDN, "постановка на охрану");
+	SIM800::sendSMS(responseMSISDN, "постановка на охрану"); // ответная СМС
 }
 //--------отключение охраны-------
 void disableSecurity(String responseMSISDN) {
 	if (!isSecurityEnabled) {
-		SIM800::sendSMS(responseMSISDN, "охрана уже отключена");
+		SIM800::sendSMS(responseMSISDN, "охрана уже отключена"); // ответная СМС
 		return;
 	}
 	isSecurityEnabled = false;
-	SIM800::sendSMS(responseMSISDN, "снятие с охраны");
+	SIM800::sendSMS(responseMSISDN, "снятие с охраны"); // ответная СМС
 }
 // ------- проверка вторжения --------
 void checkIntrusion() {
-	if (!isSecurityEnabled) return;
-	if (digitalRead(7) === HIGH) {
+	if (!isSecurityEnabled) return; // если включена охрана
+	if (digitalRead(7) === HIGH) {  // сработка датчика
 		// do something //сделай что-нибудь
 	}
 }
