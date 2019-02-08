@@ -1,17 +1,18 @@
 #include "SIM800.h"
 
-boolean isSecurityEnabled = false;
-char* controlMSISDN[] = {"+79260617034", "+79190148644"};     
+boolean isSecurityEnabled = false;                         // переменная для хранения состояния охраны
+char* controlMSISDN[] = {"+79260617034", "+79190148644"};  // текстовая переменная с номерами телефонов  
 
 // -------Если включено MSISDN????--------
+// что происходит в этой функции????? 
 boolean isAllowedMSISDN(String msisdn) {
 	uint8_t size = sizeof(controlMSISDN) / sizeof(controlMSISDN[0]);
 	for (uint8_t c = 0; c < size; c++) {
 		if (msisdn.equals(controlMSISDN[c])) {
-			return true;
+			return true;  // не совсем понимаю куда вернуть правду...
 		}
 	}
-	return false;
+	return false; // ..и куда ложь
 }
 //-------- включение охраны------
 void enableSecurity(String responseMSISDN) {
@@ -19,7 +20,7 @@ void enableSecurity(String responseMSISDN) {
 		SIM800::sendSMS(responseMSISDN, "охрана уже включена"); // ответная СМС
 		return;
 	}
-	isSecurityEnabled = true;
+	isSecurityEnabled = true;      // охрана включена
 	SIM800::sendSMS(responseMSISDN, "постановка на охрану"); // ответная СМС
 }
 //--------отключение охраны-------
@@ -28,7 +29,7 @@ void disableSecurity(String responseMSISDN) {
 		SIM800::sendSMS(responseMSISDN, "охрана уже отключена"); // ответная СМС
 		return;
 	}
-	isSecurityEnabled = false;
+	isSecurityEnabled = false;      // охрана отключена
 	SIM800::sendSMS(responseMSISDN, "снятие с охраны"); // ответная СМС
 }
 // ------- проверка вторжения --------
@@ -46,10 +47,10 @@ void setup() {
 
 void loop() {
 
-	switch (SIM800::update()) {
+	switch (SIM800::update()) {                      // если от модуля что-то пришло
 
-		case SIM800::CALL:
-			if (!isAllowedMSISDN(SIM800::msisdn)) break;
+		case SIM800::CALL:                             // если это звонок, то
+			if (!isAllowedMSISDN(SIM800::msisdn)) break; // что здесь происходит?????
 			if (isSecurityEnabled) {
 				disableSecurity(SIM800::msisdn);
 			} else {
@@ -57,12 +58,12 @@ void loop() {
 			}
 			break;
 
-		case SIM800::SMS:
-			if (!isAllowedMSISDN(SIM800::msisdn)) break;
-			if (SIM800::text.equals("1")) {
-				enableSecurity(SIM800::msisdn);
-			} else if (SIM800::text.equals("0")) {
-				disableSecurity(SIM800::msisdn);
+		case SIM800::SMS:                                 // если это СМС то
+			if (!isAllowedMSISDN(SIM800::msisdn)) break;   // что здесь происходит?????
+			if (SIM800::text.equals("1")) {                // если текст смс "1"
+				enableSecurity(SIM800::msisdn);              // включить охрану
+			} else if (SIM800::text.equals("0")) {         // если текст смс "0"
+				disableSecurity(SIM800::msisdn);             // отключить охрану
 			}
 			break;
 
