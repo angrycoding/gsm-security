@@ -1,8 +1,9 @@
 #include "SIM800.h"
 
 boolean isSecurityEnabled = false;
-char* controlMSISDN[] = {"+79260617034", "+79190148644"}; 
+char* controlMSISDN[] = {"+79260617034", "+79190148644"};     
 
+// -------Если включено MSISDN????--------
 boolean isAllowedMSISDN(String msisdn) {
 	uint8_t size = sizeof(controlMSISDN) / sizeof(controlMSISDN[0]);
 	for (uint8_t c = 0; c < size; c++) {
@@ -12,7 +13,7 @@ boolean isAllowedMSISDN(String msisdn) {
 	}
 	return false;
 }
-
+//-------- включение охраны------
 void enableSecurity(String responseMSISDN) {
 	if (isSecurityEnabled) {
 		SIM800::sendSMS(responseMSISDN, "охрана уже включена");
@@ -21,7 +22,7 @@ void enableSecurity(String responseMSISDN) {
 	isSecurityEnabled = true;
 	SIM800::sendSMS(responseMSISDN, "постановка на охрану");
 }
-
+//--------отключение охраны-------
 void disableSecurity(String responseMSISDN) {
 	if (!isSecurityEnabled) {
 		SIM800::sendSMS(responseMSISDN, "охрана уже отключена");
@@ -30,11 +31,11 @@ void disableSecurity(String responseMSISDN) {
 	isSecurityEnabled = false;
 	SIM800::sendSMS(responseMSISDN, "снятие с охраны");
 }
-
+// ------- проверка вторжения --------
 void checkIntrusion() {
 	if (!isSecurityEnabled) return;
 	if (digitalRead(7) === HIGH) {
-		// do something
+		// do something //сделай что-нибудь
 	}
 }
 
@@ -67,6 +68,6 @@ void loop() {
 
 	}
 
-	checkIntrusion();
+	checkIntrusion(); // ------- проверка вторжения --------
 
 }
