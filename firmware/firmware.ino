@@ -10,14 +10,17 @@
 //--------- БИБЛИОТЕКИ--------------------
 #include "SIM800.h"
 #include "DHT.h"             // библиотека для датчика температуры и влажности в помещении
+#include "OneWire.h"         // библиотека для датчика температуры ds18b20
 DHT dht(DHT11_pin, DHT11);   // инициализация датчика температуры и влажности в помещении
+OneWire ds(Ds18b20_pin);     // инициализация датчика температуры ds18b20
 
 // ---------ПЕРЕМЕННЫЕ----------------- 
 boolean isSecurityEnabled = false; // переменная для хранения состояния охраны
 float room_humidity                // переменная для измерения влажности в помещении
 float room_temperature             // переменная для измерения температуры в помещении
-float out_temperature             // переменная для измерения температуры на улице
-unsigned long last_time=0;         // переменная для посчета времени
+float out_temperature              // переменная для измерения температуры на улице
+long last_time1=0;                  // переменная для посчета времени
+long last_time2=0;            // Переменная для хранения времени последнего считывания с датчика
 char* controlMSISDN[] = {"+79260617034", "+79190148644"};  // текстовая переменная с номерами телефонов  
 
 
@@ -69,7 +72,26 @@ void checkIntrusion() {
   if (digitalRead(Moove_pin) === HIGH) {  // сработка датчика движния
    // добавить в смс-ку 
   }
-
+}
+int detectTemperature(){
+ 
+  byte data[2];
+  ds.reset();
+  ds.write(0xCC);
+  ds.write(0x44);
+ 
+  if (millis() - last_time2 > 60000)
+  {
+    lastUpdateTime = millis();
+    ds.reset();
+    ds.write(0xCC);
+    ds.write(0xBE);
+    data[0] = ds.read();
+    data[1] = ds.read();
+ 
+    // Формируем значение
+    out_temperature = (data[1] << 8) + data[0]; out_temperature = out_temperature >> 4;
+  }
 }
 
 void setup() {
@@ -103,6 +125,7 @@ void loop() {
 	}
 
 	checkIntrusion(); // ------- проверка вторжения --------
+  detectTemperature(); // Определяем температуру от датчика DS18b20
 
 if( millis() >= (last_time+ 60000)){              // считывание температуры раз в минуту
   last_time = millis(); 
