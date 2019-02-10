@@ -73,24 +73,25 @@ void checkIntrusion() {
    // добавить в смс-ку 
   }
 }
-int detectTemperature(){
+//---- ФУНКЦИЯ ИЗМЕРЕНИЯ ТЕМПЕРАТУРЫ DS1820
+float detectTemperature(){
  
-  byte data[2];
-  ds.reset();
-  ds.write(0xCC);
-  ds.write(0x44);
+  byte data[2];            // Место для значения температуры
+  ds.reset();              // Cброс всех предыдущих команд и параметров
+  ds.write(0xCC);          // Даем датчику DS18b20 команду пропустить поиск по адресу. В нашем случае только одно устрйоство
+  ds.write(0x44);          // Даем датчику DS18b20 команду измерить температуру.
  
   if (millis() - last_time2 > 60000)
   {
     lastUpdateTime = millis();
     ds.reset();
     ds.write(0xCC);
-    ds.write(0xBE);
-    data[0] = ds.read();
-    data[1] = ds.read();
+    ds.write(0xBE);      // Просим передать нам значение регистров со значением температуры
+    data[0] = ds.read(); // Младший байт
+    data[1] = ds.read(); // Старший байт
  
     // Формируем значение
-    out_temperature = (data[1] << 8) + data[0]; out_temperature = out_temperature >> 4;
+    out_temperature =  ((data[1] << 8) | data[0]) * 0.0625;
   }
 }
 
