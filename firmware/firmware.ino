@@ -1,26 +1,29 @@
 
-
 // -------- НАСТРОЙКА ПИНОВ -------------
 #define Door_pin 4           // пин для датчика двери
 #define Window_pin 5         // пин для датчика окна
 #define Moove_pin 0          // пин для датчика движения
 #define Ds18b20_pin 2        // пин для датчика температуры
 #define DHT11_pin 16         // пин для датчика движения
+#define power_pin            // пин для проверки наличия питания
 
 //--------- БИБЛИОТЕКИ--------------------
 #include "SIM800.h"
-#include "DHT.h"             // библиотека для датчика температуры и влажности в помещении
-#include "OneWire.h"         // библиотека для датчика температуры ds18b20
+#include <DHT.h>             // библиотека для датчика температуры и влажности в помещении
+#include <OneWire.h>         // библиотека для датчика температуры ds18b20
 DHT dht(DHT11_pin, DHT11);   // инициализация датчика температуры и влажности в помещении
 OneWire ds(Ds18b20_pin);     // инициализация датчика температуры ds18b20
 
 // ---------ПЕРЕМЕННЫЕ----------------- 
 boolean isSecurityEnabled = false; // переменная для хранения состояния охраны
-float room_humidity                // переменная для измерения влажности в помещении
-float room_temperature             // переменная для измерения температуры в помещении
-float out_temperature              // переменная для измерения температуры на улице
-long last_time1=0;                  // переменная для посчета времени
-long last_time2=0;            // Переменная для хранения времени последнего считывания с датчика
+boolean door;                      // переменная для состояния датчика двери 
+boolean window;                    // переменная для состояния датчика окна
+boolean moove;                     // переменная для состояния датчика движения
+float room_humidity;               // переменная для измерения влажности в помещении
+float room_temperature;            // переменная для измерения температуры в помещении
+float out_temperature;             // переменная для измерения температуры на улице
+long last_time1=0;                 // переменная для посчета времени
+long last_time2=0;                 // Переменная для хранения времени последнего считывания с датчика
 char* controlMSISDN[] = {"+79260617034", "+79190148644"};  // текстовая переменная с номерами телефонов  
 
 
@@ -54,6 +57,16 @@ void disableSecurity(String responseMSISDN) {
 	}
 	isSecurityEnabled = false;      // охрана отключена
 	SIM800::sendSMS(responseMSISDN, "снятие с охраны"); // ответная СМС
+}
+void sendingStatus(String responseMSISDN) {
+ char security =""; 
+ if (isSecurityEnabled == true) security ="включена";
+ if (isSecurityEnabled == false) security ="отключена";
+ char power =""; 
+ if (digitalRead(power_pin ) === HIGH) power ="питание от сети"; // если есть внешнее питание
+ if (digitalRead(power_pin ) === LOW) power ="питание от батареи"; // если нет внешнего нитания
+  
+ SIM800::sendSMS(responseMSISDN,"Охрана",security, " в доме темп.-", room_temperature," влажность-", room_humidity, " темп.на улице",out_temperature, power," состояние датчиков", door, window, moove); // текст СМС
 }
 // ------- проверка вторжения --------
 void checkIntrusion() {
@@ -91,6 +104,7 @@ float detectTemperature(){
     data[1] = ds.read(); // Старший байт
  
     // Формируем значение
+    //    - затем умножаем его на коэффициент, соответсвующий разрешающей способности (для 12 бит по умолчанию - это 0,0625)
     out_temperature =  ((data[1] << 8) | data[0]) * 0.0625;
   }
 }
@@ -114,15 +128,15 @@ void loop() {
 			}
 			break;
 
-		case SIM800::SMS:                                 // если это СМС то
-			if (!isAllowedMSISDN(SIM800::msisdn)) break;   // проверка номера, есть ли он в списке, если нет - выход
-			if (SIM800::text.equals("1")) {                // если текст смс "1"
-				enableSecurity(SIM800::msisdn);              // включить охрану
-			} else if (SIM800::text.equals("0")) {         // если текст смс "0"
-				disableSecurity(SIM800::msisdn);             // отключить охрану
-			}
-			break;
-
+		case SIM800::SMS:                                  // если это СМС то
+			if (!isAllowedMSISDN(SIM800::msisdn)) break;     // проверка номера, есть ли он в списке, если нет - выход
+			if (SIM800::text.equals("1")) {                  // если текст смс "1"
+				enableSecurity(SIM800::msisdn);                // включить охрану
+			} else if (SIM800::text.equals("0")) {           // если текст смс "0"
+				disableSecurity(SIM800::msisdn);               // отключить охрану
+			} else if (SIM800::text.equals("01"||"Состояние"||"СОСТОЯНИЕ")) {  // если пришел запрос состояния
+         sendingStatus(SIM800::msisdn);                // отправить состояние датчиков в СМС
+			}break;
 	}
 
 	checkIntrusion(); // ------- проверка вторжения --------
