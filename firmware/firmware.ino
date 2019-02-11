@@ -1,31 +1,29 @@
 
 // -------- НАСТРОЙКА ПИНОВ -------------
-#define Door_pin 4           // пин для датчика двери
-#define Window_pin 5         // пин для датчика окна
-#define Moove_pin 0          // пин для датчика движения
-#define Ds18b20_pin 2        // пин для датчика температуры
-#define DHT11_pin 16         // пин для датчика движения
-#define power_pin            // пин для проверки наличия питания
+#define doorPin 4           
+#define windowPin 5         
+#define moovePin 0          
+#define ds18b20Pin 2       
+#define DHT11Pin 16        
+#define powerPin            
 
 //--------- БИБЛИОТЕКИ--------------------
 #include "SIM800.h"
-#include <DHT.h>             // библиотека для датчика температуры и влажности в помещении
-#include <OneWire.h>         // библиотека для датчика температуры ds18b20
-DHT dht(DHT11_pin, DHT11);   // инициализация датчика температуры и влажности в помещении
-OneWire ds(Ds18b20_pin);     // инициализация датчика температуры ds18b20
+#include <DHT.h>             
+#include <OneWire.h>         
+DHT dht(DHT11Pin, DHT11);   
+OneWire ds(ds18b20Pin);    
 
 // ---------ПЕРЕМЕННЫЕ----------------- 
-boolean isSecurityEnabled = false; // переменная для хранения состояния охраны
-boolean door = false;;             // переменная для состояния датчика двери 
-boolean window = false;;           // переменная для состояния датчика окна
-boolean moove= false;;             // переменная для состояния датчика движения
-float room_humidity;               // переменная для измерения влажности в помещении
-float room_temperature;            // переменная для измерения температуры в помещении
-float out_temperature;             // переменная для измерения температуры на улице
-long last_time1=0;                 // переменная для посчета времени
-long last_time2=0;                 // Переменная для хранения времени последнего считывания с датчика
-char* controlMSISDN[] = {"+79260617034", "+79190148644"};  // текстовая переменная с номерами телефонов  
-
+boolean isSecurityEnabled = false; 
+boolean door = false;;             
+boolean window = false;;           
+boolean moove= false;;             
+float roomHumidity;               
+float roomTemperature;            
+float outTemperature;            
+long lastTime=0;                 
+char* controlMSISDN[] = {"+79260617034", "+79190148644"};  
 
 
 // функция сверки номера телефона звонящего (приславшего)СМС
@@ -43,53 +41,53 @@ boolean isAllowedMSISDN(String msisdn) {
 //-------- включение охраны------
 void enableSecurity(String responseMSISDN) {
 	if (isSecurityEnabled) {
-		SIM800::sendSMS(responseMSISDN, "охрана уже включена"); // ответная СМС
+		SIM800::sendSMS(responseMSISDN, "охрана уже включена"); 
 		return;
 	}
 	isSecurityEnabled = true;      // охрана включена
-	SIM800::sendSMS(responseMSISDN, "постановка на охрану"); // ответная СМС
+	SIM800::sendSMS(responseMSISDN, "постановка на охрану"); 
 }
 //--------отключение охраны-------
 void disableSecurity(String responseMSISDN) {
 	if (!isSecurityEnabled) {
-		SIM800::sendSMS(responseMSISDN, "охрана уже отключена"); // ответная СМС
+		SIM800::sendSMS(responseMSISDN, "охрана уже отключена"); 
 		return;
 	}
 	isSecurityEnabled = false;      // охрана отключена
-	SIM800::sendSMS(responseMSISDN, "снятие с охраны"); // ответная СМС
+	SIM800::sendSMS(responseMSISDN, "снятие с охраны"); 
 }
 void sendingStatus(String responseMSISDN) {
 
-detectOutTemperature(); // Определяем температуру от датчика DS18b20
-detectInsideTemperature(); Определяем температуру и влажность с датчика DHT11
+detectOutTemperature();
+detectInsideTemperature();
 
 
  char security =""; 
  if (isSecurityEnabled == true) security ="включена";
  if (isSecurityEnabled == false) security ="отключена";
  char power =""; 
- if (digitalRead(power_pin ) === HIGH) power ="питание от сети"; // если есть внешнее питание
- if (digitalRead(power_pin ) === LOW) power ="питание от батареи"; // если нет внешнего нитания
+ if (digitalRead(powerPin) === HIGH) power ="питание от сети";
+ if (digitalRead(powerPin) === LOW) power ="питание от батареи"; 
   
- SIM800::sendSMS(responseMSISDN,"Охрана",security, " в доме темп.-", room_temperature," влажность-", room_humidity, " темп.на улице",out_temperature, power," состояние датчиков", door, window, moove); // текст СМС
+ SIM800::sendSMS(responseMSISDN,"Охрана",security, " в доме темп.-", roomTemperature," влажность-", roomHumidity, " темп.на улице",outTemperature, power," состояние датчиков", door, window, moove); // текст СМС
 }
 // ------- проверка вторжения --------
 void checkIntrusion() {
 	if (!isSecurityEnabled) return; // если включена охрана
-	if (digitalRead(7) === HIGH) {  // сработка датчика
-		// do something //сделай что-нибудь
+	if (digitalRead(7) === HIGH) { 
+	
 	}
-  if (digitalRead(Door_pin) === HIGH) {  // сработка датчика двери
+  if (digitalRead(doorPin) === HIGH) { 
    door = true;
    // добавить в смс-ку 
   }
   }
-  if (digitalRead(Window_pin) === HIGH) {  // сработка датчика окна
+  if (digitalRead(windowPin) === HIGH) {  
    window=true;
    // добавить в смс-ку 
   }
   }
-  if (digitalRead(Moove_pin) === HIGH) {  // сработка датчика движния
+  if (digitalRead(moovePin) === HIGH) {  
    moove=true;
    // добавить в смс-ку 
   }
@@ -102,7 +100,7 @@ float detectOutTemperature(){
   ds.write(0xCC);          // Даем датчику DS18b20 команду пропустить поиск по адресу. В нашем случае только одно устрйоство
   ds.write(0x44);          // Даем датчику DS18b20 команду измерить температуру.
  
-  if (millis() - last_time2 > 60000)
+  if (millis() - lastTime > 60000)
   {
     lastUpdateTime = millis();
     ds.reset();
@@ -113,13 +111,13 @@ float detectOutTemperature(){
  
     // Формируем значение
     //    - затем умножаем его на коэффициент, соответсвующий разрешающей способности (для 12 бит по умолчанию - это 0,0625)
-    out_temperature =  ((data[1] << 8) | data[0]) * 0.0625;
+    outTemperature =  ((data[1] << 8) | data[0]) * 0.0625;
   }
 }
 void detectInsideTemperature(){
   
-room_humidity   = dht.readHumidity();    //Считываем влажность
-room_temperature = dht.readTemperature(); // Считываем температуру
+roomHumidity   = dht.readHumidity();    //Считываем влажность
+roomTemperature = dht.readTemperature(); // Считываем температуру
 }
   
 
@@ -148,7 +146,7 @@ void loop() {
 				enableSecurity(SIM800::msisdn);                // включить охрану
 			} else if (SIM800::text.equals("0")) {           // если текст смс "0"
 				disableSecurity(SIM800::msisdn);               // отключить охрану
-			} else if (SIM800::text.equals("01"||"Состояние"||"СОСТОЯНИЕ")) {  // если пришел запрос состояния
+			} else if (SIM800::text.equals("01")||SIM800::text.equals("Состояние")||SIM800::text.equals("СОСТОЯНИЕ")) {  // если пришел запрос состояния
          sendingStatus(SIM800::msisdn);                // отправить состояние датчиков в СМС
 			}break;
 	}
