@@ -69,7 +69,7 @@ detectInsideTemperature();
  if (digitalRead(powerPin) == HIGH) power ="питание от сети";
  if (digitalRead(powerPin) == LOW) power ="питание от батареи"; 
   
- SIM800::sendSMS(responseMSISDN,"Охрана",security, " в доме темп.-", roomTemperature," влажность-", roomHumidity, " темп.на улице",outTemperature, power," состояние датчиков", door, window, moove); // текст СМС
+SIM800::sendSMS(responseMSISDN,"Охрана" + String(security) + " в доме темп.-" +  String(roomTemperature) + " влажность-" + String(roomHumidity) + " темп.на улице" + String(outTemperature) + String(power) + " состояние датчиков" + String(door) + String( window) + String( moove)); // текст СМС}
 }
 // ------- проверка вторжения --------
 void checkIntrusion() {
