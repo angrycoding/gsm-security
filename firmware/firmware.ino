@@ -16,9 +16,9 @@ OneWire ds(Ds18b20_pin);     // инициализация датчика тем
 
 // ---------ПЕРЕМЕННЫЕ----------------- 
 boolean isSecurityEnabled = false; // переменная для хранения состояния охраны
-boolean door;                      // переменная для состояния датчика двери 
-boolean window;                    // переменная для состояния датчика окна
-boolean moove;                     // переменная для состояния датчика движения
+boolean door = false;;             // переменная для состояния датчика двери 
+boolean window = false;;           // переменная для состояния датчика окна
+boolean moove= false;;             // переменная для состояния датчика движения
 float room_humidity;               // переменная для измерения влажности в помещении
 float room_temperature;            // переменная для измерения температуры в помещении
 float out_temperature;             // переменная для измерения температуры на улице
@@ -59,6 +59,11 @@ void disableSecurity(String responseMSISDN) {
 	SIM800::sendSMS(responseMSISDN, "снятие с охраны"); // ответная СМС
 }
 void sendingStatus(String responseMSISDN) {
+
+detectOutTemperature(); // Определяем температуру от датчика DS18b20
+detectInsideTemperature(); Определяем температуру и влажность с датчика DHT11
+
+
  char security =""; 
  if (isSecurityEnabled == true) security ="включена";
  if (isSecurityEnabled == false) security ="отключена";
@@ -75,19 +80,22 @@ void checkIntrusion() {
 		// do something //сделай что-нибудь
 	}
   if (digitalRead(Door_pin) === HIGH) {  // сработка датчика двери
+   door = true;
    // добавить в смс-ку 
   }
   }
   if (digitalRead(Window_pin) === HIGH) {  // сработка датчика окна
+   window=true;
    // добавить в смс-ку 
   }
   }
   if (digitalRead(Moove_pin) === HIGH) {  // сработка датчика движния
+   moove=true;
    // добавить в смс-ку 
   }
 }
 //---- ФУНКЦИЯ ИЗМЕРЕНИЯ ТЕМПЕРАТУРЫ DS1820
-float detectTemperature(){
+float detectOutTemperature(){
  
   byte data[2];            // Место для значения температуры
   ds.reset();              // Cброс всех предыдущих команд и параметров
@@ -108,6 +116,12 @@ float detectTemperature(){
     out_temperature =  ((data[1] << 8) | data[0]) * 0.0625;
   }
 }
+void detectInsideTemperature(){
+  
+room_humidity   = dht.readHumidity();    //Считываем влажность
+room_temperature = dht.readTemperature(); // Считываем температуру
+}
+  
 
 void setup() {
 	Serial.begin(9600);
@@ -140,11 +154,5 @@ void loop() {
 	}
 
 	checkIntrusion(); // ------- проверка вторжения --------
-  detectTemperature(); // Определяем температуру от датчика DS18b20
-
-if( millis() >= (last_time+ 60000)){              // считывание температуры раз в минуту
-  last_time = millis(); 
-room_humidity   = dht.readHumidity();    //Считываем влажность
-room_temperature = dht.readTemperature(); // Считываем температуру
-}
+ 
 }
