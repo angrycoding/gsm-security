@@ -5,7 +5,7 @@
 #define moovePin 0          
 #define ds18b20Pin 2       
 #define DHT11Pin 16        
-#define powerPin            
+#define powerPin  8          
 
 //--------- БИБЛИОТЕКИ--------------------
 #include "SIM800.h"
@@ -62,32 +62,32 @@ detectOutTemperature();
 detectInsideTemperature();
 
 
- char security =""; 
+ String security =""; 
  if (isSecurityEnabled == true) security ="включена";
  if (isSecurityEnabled == false) security ="отключена";
- char power =""; 
- if (digitalRead(powerPin) === HIGH) power ="питание от сети";
- if (digitalRead(powerPin) === LOW) power ="питание от батареи"; 
+ String power =""; 
+ if (digitalRead(powerPin) == HIGH) power ="питание от сети";
+ if (digitalRead(powerPin) == LOW) power ="питание от батареи"; 
   
  SIM800::sendSMS(responseMSISDN,"Охрана",security, " в доме темп.-", roomTemperature," влажность-", roomHumidity, " темп.на улице",outTemperature, power," состояние датчиков", door, window, moove); // текст СМС
 }
 // ------- проверка вторжения --------
 void checkIntrusion() {
 	if (!isSecurityEnabled) return; // если включена охрана
-	if (digitalRead(7) === HIGH) { 
+	if (digitalRead(7) == HIGH) { 
 	
 	}
-  if (digitalRead(doorPin) === HIGH) { 
+  if (digitalRead(doorPin) == HIGH) { 
    door = true;
    // добавить в смс-ку 
   }
-  }
-  if (digitalRead(windowPin) === HIGH) {  
+  
+  if (digitalRead(windowPin) == HIGH) {  
    window=true;
    // добавить в смс-ку 
   }
-  }
-  if (digitalRead(moovePin) === HIGH) {  
+  
+  if (digitalRead(moovePin) == HIGH) {  
    moove=true;
    // добавить в смс-ку 
   }
@@ -102,7 +102,7 @@ float detectOutTemperature(){
  
   if (millis() - lastTime > 60000)
   {
-    lastUpdateTime = millis();
+    lastTime = millis();
     ds.reset();
     ds.write(0xCC);
     ds.write(0xBE);      // Просим передать нам значение регистров со значением температуры
