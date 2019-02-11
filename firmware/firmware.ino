@@ -142,11 +142,11 @@ void loop() {
 
 		case SIM800::SMS:                                  // если это СМС то
 			if (!isAllowedMSISDN(SIM800::msisdn)) break;     // проверка номера, есть ли он в списке, если нет - выход
-			if (SIM800::text.equals("1")) {                  // если текст смс "1"
+			if (SIM800::text.equals("1")||SIM800::text.equals("включить")||SIM800::text.equals("охрана")) {                  // если текст смс "1"
 				enableSecurity(SIM800::msisdn);                // включить охрану
-			} else if (SIM800::text.equals("0")) {           // если текст смс "0"
+			} else if (SIM800::text.equals("0")||SIM800::text.equals("отключить")||SIM800::text.equals("снять")) {           // если текст смс "0"
 				disableSecurity(SIM800::msisdn);               // отключить охрану
-			} else if (SIM800::text.equals("01")||SIM800::text.equals("Состояние")||SIM800::text.equals("СОСТОЯНИЕ")) {  // если пришел запрос состояния
+			} else if (SIM800::text.equals("01")||SIM800::text.equals("состояние")) {  // если пришел запрос состояния
          sendingStatus(SIM800::msisdn);                // отправить состояние датчиков в СМС
 			}break;
 	}
