@@ -15,20 +15,22 @@ DHT dht(DHT11Pin, DHT11);
 OneWire ds(ds18b20Pin);    
 
 // ---------ПЕРЕМЕННЫЕ----------------- 
-boolean isSecurityEnabled = false; 
-boolean door = false;;             
-boolean window = false;;           
-boolean moove= false;;             
+boolean isSecurityEnabled = false;
+boolean warning = false;;  
+boolean door = false;             
+boolean window = false;           
+boolean moove= false;             
 float roomHumidity;               
 float roomTemperature;            
 float outTemperature;            
 long lastTime=0;                 
 char* controlMSISDN[] = {"+79260617034", "+79190148644"};  
+String doorMsg = "открыта дверь ";
+String windowMsg = "открыта окно ";
+String mooveMsg = "обнаружено движение ";
+String warnSMS = "";
 
-
-// функция сверки номера телефона звонящего (приславшего)СМС
-// с номерами телефона из списка, если номер телефона есть в списке, то
-// присваивается true, если нет, то false
+// функция сверки номера телефона звонящего (приславшего СМС)
 boolean isAllowedMSISDN(String msisdn) {    
 	uint8_t size = sizeof(controlMSISDN) / sizeof(controlMSISDN[0]);
 	for (uint8_t c = 0; c < size; c++) {
@@ -69,28 +71,38 @@ detectInsideTemperature();
  if (digitalRead(powerPin) == HIGH) power ="питание от сети";
  if (digitalRead(powerPin) == LOW) power ="питание от батареи"; 
   
-SIM800::sendSMS(responseMSISDN,"Охрана" + String(security) + " в доме темп.-" +  String(roomTemperature) + " влажность-" + String(roomHumidity) + " темп.на улице" + String(outTemperature) + String(power) + " состояние датчиков" + String(door) + String( window) + String( moove)); // текст СМС}
+SIM800::sendSMS(responseMSISDN,"Охрана" + String(security) + " в доме темп.-" +  String(roomTemperature) + " влажность-" + String(roomHumidity) + " темп.на улице" + String(outTemperature) + String(power) + " состояние датчиков" + String(door) + String(window) + String(moove)); // текст СМС}
 }
 // ------- проверка вторжения --------
 void checkIntrusion() {
 	if (!isSecurityEnabled) return; // если включена охрана
 	if (digitalRead(7) == HIGH) { 
-	
+	warning = true;
 	}
   if (digitalRead(doorPin) == HIGH) { 
    door = true;
-   // добавить в смс-ку 
+   warning = true;
   }
   
   if (digitalRead(windowPin) == HIGH) {  
    window=true;
-   // добавить в смс-ку 
+   warning = true;
   }
   
   if (digitalRead(moovePin) == HIGH) {  
    moove=true;
-   // добавить в смс-ку 
+   warning = true;
   }
+}
+void warnSmsSend(String responseMSISDN) {
+
+if((millis()-lastTime)> 60000){
+    lastTime = millis();
+    if (door)warnSMS += doorMsg, door = false;
+    if(window)warnSMS += windowMsg, window = false;
+    if (moove)warnSMS += mooveMsg, moove = false; 
+  }
+if (warning&&warnSMS!="")SIM800::sendSMS(responseMSISDN,"Тревога " + String(warnSMS)), warning = false;
 }
 //---- ФУНКЦИЯ ИЗМЕРЕНИЯ ТЕМПЕРАТУРЫ DS1820
 float detectOutTemperature(){
@@ -152,5 +164,5 @@ void loop() {
 	}
 
 	checkIntrusion(); // ------- проверка вторжения --------
- 
+  warnSmsSend(SIM800::msisdn);
 }
