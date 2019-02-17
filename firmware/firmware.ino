@@ -46,7 +46,7 @@ void enableSecurity(String responseMSISDN) {
 		SIM800::sendSMS(responseMSISDN, "охрана уже включена"); 
 		return;
 	}
-	isSecurityEnabled = true;      // охрана включена
+	isSecurityEnabled = true;     
 	SIM800::sendSMS(responseMSISDN, "постановка на охрану"); 
 }
 //--------отключение охраны-------
@@ -55,7 +55,7 @@ void disableSecurity(String responseMSISDN) {
 		SIM800::sendSMS(responseMSISDN, "охрана уже отключена"); 
 		return;
 	}
-	isSecurityEnabled = false;      // охрана отключена
+	isSecurityEnabled = false;      
 	SIM800::sendSMS(responseMSISDN, "снятие с охраны"); 
 }
 void sendingStatus(String responseMSISDN) {
@@ -63,19 +63,24 @@ void sendingStatus(String responseMSISDN) {
 detectOutTemperature();
 detectInsideTemperature();
 
-
  String security =""; 
  if (isSecurityEnabled == true) security ="включена";
  if (isSecurityEnabled == false) security ="отключена";
+ 
  String power =""; 
  if (digitalRead(powerPin) == HIGH) power ="питание от сети";
  if (digitalRead(powerPin) == LOW) power ="питание от батареи"; 
-  
-SIM800::sendSMS(responseMSISDN,"Охрана" + String(security) + " в доме темп.-" +  String(roomTemperature) + " влажность-" + String(roomHumidity) + " темп.на улице" + String(outTemperature) + String(power) + " состояние датчиков" + String(door) + String(window) + String(moove)); // текст СМС}
+ 
+ String statusSMS = "Охрана" + String(security);
+        statusSMS += " темп.в доме-" +  String(roomTemperature) + " влажность-" + String(roomHumidity);
+        statusSMS += " темп.на улице-" + String(outTemperature) + String(power);
+        statusSMS += " состояние датчиков: двери-" + String(door) + " окон-" + String(window) + " движения-" + String(moove);
+        
+SIM800::sendSMS(responseMSISDN,statusSMS); // текст СМС}
 }
 // ------- проверка вторжения --------
 void checkIntrusion() {
-	if (!isSecurityEnabled) return; // если включена охрана
+	if (!isSecurityEnabled) return; 
 	if (digitalRead(7) == HIGH) { 
 	warning = true;
 	}
@@ -128,8 +133,8 @@ float detectOutTemperature(){
 }
 void detectInsideTemperature(){
   
-roomHumidity   = dht.readHumidity();    //Считываем влажность
-roomTemperature = dht.readTemperature(); // Считываем температуру
+roomHumidity   = dht.readHumidity();    
+roomTemperature = dht.readTemperature(); 
 }
   
 
@@ -143,7 +148,7 @@ void loop() {
 
 	switch (SIM800::update()) {                      // если от модуля что-то пришло
 
-		case SIM800::CALL:                             // если это звонок, то
+		case SIM800::CALL:                             
 			if (!isAllowedMSISDN(SIM800::msisdn)) break; // проверка номера, есть ли он в списке, если нет - выход
 			if (isSecurityEnabled) {
 				disableSecurity(SIM800::msisdn);
@@ -155,14 +160,14 @@ void loop() {
 		case SIM800::SMS:                                  // если это СМС то
 			if (!isAllowedMSISDN(SIM800::msisdn)) break;     // проверка номера, есть ли он в списке, если нет - выход
 			if (SIM800::text.equals("1")||SIM800::text.equals("включить")||SIM800::text.equals("охрана")) {                  // если текст смс "1"
-				enableSecurity(SIM800::msisdn);                // включить охрану
+				enableSecurity(SIM800::msisdn);                
 			} else if (SIM800::text.equals("0")||SIM800::text.equals("отключить")||SIM800::text.equals("снять")) {           // если текст смс "0"
-				disableSecurity(SIM800::msisdn);               // отключить охрану
+				disableSecurity(SIM800::msisdn);               
 			} else if (SIM800::text.equals("01")||SIM800::text.equals("состояние")) {  // если пришел запрос состояния
-         sendingStatus(SIM800::msisdn);                // отправить состояние датчиков в СМС
+         sendingStatus(SIM800::msisdn);                
 			}break;
 	}
 
-	checkIntrusion(); // ------- проверка вторжения --------
+	checkIntrusion(); 
   warnSmsSend(SIM800::msisdn);
 }
