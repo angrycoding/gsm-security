@@ -14,6 +14,7 @@
 DHT dht(DHT11Pin, DHT11);   
 OneWire ds(ds18b20Pin);    
 
+<<<<<<< HEAD
 // ---------ПЕРЕМЕННЫЕ----------------- 
 boolean isSecurityEnabled = false;
 boolean warning = false;;  
@@ -137,6 +138,11 @@ roomHumidity   = dht.readHumidity();
 roomTemperature = dht.readTemperature(); 
 }
   
+=======
+boolean isEnabled = false;
+char* controlMSISDN[] = {"+79260617034", "+79190148644"}; 
+    
+>>>>>>> parent of 2a4293c... enable / disable using sms, mockup checkIntrusion procedure
 
 void setup() {
 	Serial.begin(9600);
@@ -144,19 +150,39 @@ void setup() {
   dht.begin();
 }
 
-void loop() {
+boolean isAllowedMSISDN(String msisdn) {
+  uint8_t size = sizeof(controlMSISDN) / sizeof(controlMSISDN[0]);
+  for (uint8_t c = 0; c < size; c++) {
+    if (msisdn.equals(controlMSISDN[c])) {
+      return true;
+    }
+  }
+  return false;
+}
 
+<<<<<<< HEAD
 	switch (SIM800::update()) {                      // если от модуля что-то пришло
 
 		case SIM800::CALL:                             
 			if (!isAllowedMSISDN(SIM800::msisdn)) break; // проверка номера, есть ли он в списке, если нет - выход
 			if (isSecurityEnabled) {
 				disableSecurity(SIM800::msisdn);
+=======
+
+void loop() {
+	switch (SIM800::update()) {
+
+		case SIM800::CALL:
+      if (!isAllowedMSISDN(SIM800::msisdn)) break;
+  		if (isEnabled = !isEnabled) {
+				SIM800::sendSMS(SIM800::msisdn, "включено");
+>>>>>>> parent of 2a4293c... enable / disable using sms, mockup checkIntrusion procedure
 			} else {
-				enableSecurity(SIM800::msisdn);
+				SIM800::sendSMS(SIM800::msisdn, "выключено");
 			}
 			break;
 
+<<<<<<< HEAD
 		case SIM800::SMS:                                  // если это СМС то
 			if (!isAllowedMSISDN(SIM800::msisdn)) break;     // проверка номера, есть ли он в списке, если нет - выход
 			if (SIM800::text.equals("1")||SIM800::text.equals("включить")||SIM800::text.equals("охрана")) {                  // если текст смс "1"
@@ -170,4 +196,13 @@ void loop() {
 
 	checkIntrusion(); 
   warnSmsSend(SIM800::msisdn);
+=======
+		case SIM800::SMS:
+      if (!isAllowedMSISDN(SIM800::msisdn)) break;
+      Serial.print("SMS = ");
+      Serial.println(SIM800::text);
+			break;
+
+	}
+>>>>>>> parent of 2a4293c... enable / disable using sms, mockup checkIntrusion procedure
 }
