@@ -26,7 +26,7 @@ float outTemperature;
 long lastTime=0;                 
 char* controlMSISDN[] = {"+79260617034", "+79190148644"};  
 String doorMsg = "открыта дверь ";
-String windowMsg = "открыта окно ";
+String windowMsg = "открыто окно ";
 String mooveMsg = "обнаружено движение ";
 String warnSMS = "";
 
@@ -76,7 +76,7 @@ detectInsideTemperature();
         statusSMS += " темп.на улице-" + String(outTemperature) + String(power);
         statusSMS += " состояние датчиков: двери-" + String(door) + " окон-" + String(window) + " движения-" + String(moove);
         
-SIM800::sendSMS(responseMSISDN,statusSMS); // текст СМС}
+SIM800::sendSMS(responseMSISDN,"Cостояние норм)"); // текст СМС}
 }
 // ------- проверка вторжения --------
 void checkIntrusion() {
@@ -107,7 +107,7 @@ if((millis()-lastTime)> 60000){
     if(window)warnSMS += windowMsg, window = false;
     if (moove)warnSMS += mooveMsg, moove = false; 
   }
-if (warning&&warnSMS!="")SIM800::sendSMS(responseMSISDN,"Тревога " + String(warnSMS)), warning = false;
+if (warning&&warnSMS!="")SIM800::sendSMS(responseMSISDN,"Тревога:" + String(warnSMS)), warning = false;
 }
 //---- ФУНКЦИЯ ИЗМЕРЕНИЯ ТЕМПЕРАТУРЫ DS1820
 float detectOutTemperature(){
@@ -163,7 +163,7 @@ void loop() {
 				enableSecurity(SIM800::msisdn);                
 			} else if (SIM800::text.equals("0")||SIM800::text.equals("отключить")||SIM800::text.equals("снять")) {           // если текст смс "0"
 				disableSecurity(SIM800::msisdn);               
-			} else if (SIM800::text.equals("01")||SIM800::text.equals("состояние")) {  // если пришел запрос состояния
+			} else if (SIM800::text.equals("2")||SIM800::text.equals("состояние")) {  // если пришел запрос состояния
          sendingStatus(SIM800::msisdn);                
 			}break;
 	}
