@@ -158,20 +158,20 @@ void loop() {
       }
       break;
 
-    case SIM800::SMS:                                  // если это СМС то
-      if (!isAllowedMSISDN(SIM800::msisdn)) break;     // проверка номера, есть ли он в списке, если нет - выход
-      if (SIM800::text.equals("1")||SIM800::text.equals("включить")||SIM800::text.equals("охрана")) {                  // если текст смс "1"
-        enableSecurity(SIM800::msisdn);                
-      } else if (SIM800::text.equals("0")||SIM800::text.equals("отключить")||SIM800::text.equals("снять")) {           // если текст смс "0"
-        disableSecurity(SIM800::msisdn);               
-      } else if (SIM800::text.equals("2")||SIM800::text.equals("состояние")) {  // если пришел запрос состояния
+    case SIM800::SMS:
+      if (!isAllowedMSISDN(SIM800::msisdn)) break;
+      if (SIM800::text.equals("1")) {
+        enableSecurity(SIM800::msisdn);
+      } else if (SIM800::text.equals("0")) {
+        disableSecurity(SIM800::msisdn);
+      } else if (SIM800::text.equals("2")) {  // если пришел запрос состояния
          sendingStatus(SIM800::msisdn);                
       }break;
   }
 
   checkIntrusion(); 
-  warnSmsSend(SIM800::msisdn);
+ // warnSmsSend(SIM800::msisdn);
 
    if (isSecurityEnabled) digitalWrite (13, HIGH);
-   else digitalWrite (16, LOW);
+   else digitalWrite (13, LOW);
 }
