@@ -1,10 +1,10 @@
 // -------- НАСТРОЙКА ПИНОВ -------------
-#define doorPin 4           
-#define windowPin 5         
-#define moovePin 0          
-#define ds18b20Pin 2       
-#define DHT11Pin 16        
-#define powerPin  8          
+#define doorPin 2           
+#define windowPin 3         
+#define moovePin 6          
+#define ds18b20Pin 7       
+#define DHT11Pin 8        
+#define powerPin 9         
 
 //--------- БИБЛИОТЕКИ--------------------
 #include "SIM800.h"
@@ -138,8 +138,10 @@ roomTemperature = dht.readTemperature();
   
 
 void setup() {
+  pinMode(13, OUTPUT);
+
   Serial.begin(9600);
-  SIM800::init(9600, 12, 14);
+  SIM800::init(9600, 5, 4);
   dht.begin();
 }
 
@@ -169,4 +171,7 @@ void loop() {
 
   checkIntrusion(); 
   warnSmsSend(SIM800::msisdn);
+
+   if (isSecurityEnabled) digitalWrite (13, HIGH);
+   else digitalWrite (16, LOW);
 }
