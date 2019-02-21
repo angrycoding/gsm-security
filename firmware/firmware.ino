@@ -13,7 +13,6 @@ boolean warning = false;;
 boolean door = false;             
 boolean window = false;           
 boolean moove= false;        
-float roomHumidity = 56.3;               
 float roomTemperature = 18.5;            
 float outTemperature = -4.5;            
 long lastTime=0;        
@@ -37,20 +36,19 @@ boolean isAllowedMSISDN(String msisdn) {
 void sendingStatus(String responseMSISDN) {
 
  String security =""; 
- if (isSecurityEnabled == true) security ="Security -On";
- if (isSecurityEnabled == false) security ="Security -Off";
+ if (isSecurityEnabled == true) security ="Oxp=1";
+ if (isSecurityEnabled == false) security ="Oxp=0";
  
  String power =""; 
- if (digitalRead(powerPin) == HIGH) power ="220v-Ok";
- if (digitalRead(powerPin) == LOW) power ="220v-Low"; 
+ if (digitalRead(powerPin) == HIGH) power ="220-Ok";
+ if (digitalRead(powerPin) == LOW) power ="220--"; 
  
- // для справки: СМС всещвет 160 символов на латиннице и 70 на киррилице
-
- 
- String statusSMS = "Security -" + String(security)+ " InsideTemp-";// +  String(roomTemperature) + "°C"+ " InsideHum-" + String(roomHumidity)+"%"; 
+ // для справки: СМС вмещает 160 символов на латиннице и 70 на киррилице
+String Temp = "temp=" + String(roomTemperature);          
+String statusSMS = security+"\n"+power+"\n"+Temp;
         //statusSMS += " OutTemp-" + String(outTemperature)+"°C" + String(power);                              
         //statusSMS += " door-" + String(door) + " window-" + String(window) + " moowe-" + String(moove); 
-  // statusSMS - 87 символов на латиннице
+  // statusSMS - 87 символов 
 SIM800::sendSMS(responseMSISDN,statusSMS); // текст СМС}
 }
 void enableSecurity(String responseMSISDN) {
