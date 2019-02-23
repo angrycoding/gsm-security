@@ -1,27 +1,35 @@
-#define powerPin 2   
-#define rxPin 2
-#define txPin 3
-#define doorPin 6           
-#define windowPin 7         
-#define moovePin 8          
+#define powerPin 12   
+#define rxPin 3
+#define txPin 2
+#define doorPin 9           
+#define windowPin 8         
+#define moovePin 7          
 #define DHTPin 11 
+#define ds18b20Pin 10
 
 #include "SIM800.h"
 #include <DHT.h>   
-DHT dht(DHTPin, DHT11);
+#include <OneWire.h>     
+#include <DallasTemperature.h>
 
-boolean isSecurityEnabled = false;
+
+DHT dht(DHTPin, DHT11);
+OneWire oneWire(ds18b20Pin); 
+DallasTemperature sensors(&oneWire);
+
+bool isSecurityEnabled =0;
+int roomHumidity;               
+int roomTemperature;   
+int outTemperature;       
+long lastTime=0;  
 boolean warning = false;;  
 boolean door = false;             
 boolean window = false;           
-boolean moove= false;        
-float roomTemperature = 0;            
-float outTemperature = 0;            
-long lastTime=0;        
-String doorMsg = "открыта дверь ";
-String windowMsg = "открыто окно ";
-String mooveMsg = "обнаружено движение ";
+boolean moove= false;    
+boolean warn= false;   
+boolean Power=false;
 String warnSMS = "";
+String power ="220-Ok"; 
 char* controlMSISDN[] = {"+79260617034", "+79190148644"}; 
 
 
@@ -34,32 +42,34 @@ boolean isAllowedMSISDN(String msisdn) {
   }
   return false;
 }
-
+//-------------ОТПРАВКА СТАТУСА------------------------------------------------
 void sendingStatus(String responseMSISDN) {
-
+ 
  String security =""; 
  if (isSecurityEnabled == true) security ="Oxp=1";
  if (isSecurityEnabled == false) security ="Oxp=0";
- 
- String power =""; 
- if (digitalRead(powerPin) == HIGH) power ="220-Ok";
- if (digitalRead(powerPin) == LOW) power ="220--"; 
 
+sensors.requestTemperatures();
+outTemperature =sensors.getTempCByIndex(0);
+ 
 roomHumidity   = dht.readHumidity();    
 roomTemperature = dht.readTemperature(); 
  
- // для справки: СМС вмещает 160 символов на латиннице и 70 на киррилице
-String Temp = "temp=" + String(roomTemperature);          
-String statusSMS = security+"\n"+power+"\n"+Temp;
-        //statusSMS += " OutTemp-" + String(outTemperature)+"°C" + String(power);                              
-        //statusSMS += " door-" + String(door) + " window-" + String(window) + " moowe-" + String(moove); 
-  // statusSMS - 87 символов 
-SIM800::sendSMS(responseMSISDN,statusSMS); // текст СМС}
+String Temp = "in=" + String(roomTemperature);      
+String Hum = "hum=" + String(roomHumidity);    
+String outTemp = "out=" + String(outTemperature);  
+String statusSMS1 = security+"\n"+power+"\n"+Hum + "\n" +Temp+"\n"+ outTemp;
+String statusSMS2 = String (statusSMS2)+"\nd="+door+"\nw="+window+"\nm="+moove;
+
+
+SIM800::sendSMS(responseMSISDN,statusSMS1); 
+SIM800::sendSMS(responseMSISDN,statusSMS2); 
 }
-
-roomHumidity   = dht.readHumidity();    
-roomTemperature = dht.readTemperature(); 
-
+//------------ОТПРАВКА ТРЕВОГИ---------------------
+void sendWarnSMS(String responseMSISDN) {
+  SIM800::sendSMS(responseMSISDN,warnSMS); 
+}
+//------------ОТПРАКА ОТВЕТНЫХ СМС О СОСТОЯНИИ ОХРАНЫ--------------------------
 void enableSecurity(String responseMSISDN) {
   if (isSecurityEnabled) {
     SIM800::sendSMS(responseMSISDN, "охрана уже включена");
@@ -77,24 +87,24 @@ void disableSecurity(String responseMSISDN) {
   isSecurityEnabled = false;
   SIM800::sendSMS(responseMSISDN, "снятие с охраны");
 }
-void warnSendSMS(String responseMSISDN) {
-   SIM800::sendSMS(responseMSISDN, "тревога");
-}
-void checkIntrusion() {
-  if (!isSecurityEnabled) return;
-  if (digitalRead(7) == HIGH) {
-    warnSendSMS(SIM800::msisdn);
+// -----------------ПРОВЕРКА ДАТЧИКОВ-------------------------------
+void checkSensors() {
+   if (digitalRead(doorPin) == HIGH)  door = true,   warn = true;
+   if (digitalRead(windowPin) == HIGH)window = true, warn = true;  
+   if (digitalRead(moovePin) == HIGH) moove = true,  warn = true;  
+   if (digitalRead(powerPin) == HIGH) Power=true;
+   if (digitalRead(powerPin) == LOW)  Power=false;
   }
-}
 
 void setup() {
-    pinMode(16, OUTPUT);
+  pinMode(13, OUTPUT);
   Serial.begin(9600);
   SIM800::init(9600, rxPin, txPin);
+  sensors.begin();
 }
 
 void loop() {
-
+checkSensors(); 
   switch (SIM800::update()) {
 
     case SIM800::CALL:
@@ -120,7 +130,20 @@ void loop() {
 
   }
 
-  checkIntrusion();
-     if (isSecurityEnabled) digitalWrite (13, HIGH);
+   if (isSecurityEnabled) digitalWrite (13, HIGH);
    else digitalWrite (13, LOW);
+
+if (!isSecurityEnabled) return;  // далее код выполняется только если isSecurityEnabled=1
+
+   if ((millis () -lastTime)>2000)
+   {
+       lastTime=millis();
+       if(door) {warnSMS = String(warnSMS)+"открыта дверь\n"; door=false;}
+       if(window){warnSMS = String(warnSMS)+"открыто окно\n"; window=false;}
+       if(moove) {warnSMS = String(warnSMS)+"движение\n"; moove=false;}
+       if(Power==false && power=="220-Ok") warnSMS = String(warnSMS)+"отключено питание\n", power="220--"; 
+       if(Power== true && power=="220--")  warnSMS = String(warnSMS)+"подключено питание\n", power="220-Ok"; 
+       if(warnSMS!="") sendWarnSMS(SIM800::msisdn),warnSMS="";
+    }
+   
 }
