@@ -1,20 +1,22 @@
 #define powerPin 2   
-#define rxPin 5
-#define txPin 4
+#define rxPin 2
+#define txPin 3
 #define doorPin 6           
 #define windowPin 7         
 #define moovePin 8          
-  
+#define DHTPin 11 
 
 #include "SIM800.h"
+#include <DHT.h>   
+DHT dht(DHTPin, DHT11);
 
 boolean isSecurityEnabled = false;
 boolean warning = false;;  
 boolean door = false;             
 boolean window = false;           
 boolean moove= false;        
-float roomTemperature = 18.5;            
-float outTemperature = -4.5;            
+float roomTemperature = 0;            
+float outTemperature = 0;            
 long lastTime=0;        
 String doorMsg = "открыта дверь ";
 String windowMsg = "открыто окно ";
@@ -42,6 +44,9 @@ void sendingStatus(String responseMSISDN) {
  String power =""; 
  if (digitalRead(powerPin) == HIGH) power ="220-Ok";
  if (digitalRead(powerPin) == LOW) power ="220--"; 
+
+roomHumidity   = dht.readHumidity();    
+roomTemperature = dht.readTemperature(); 
  
  // для справки: СМС вмещает 160 символов на латиннице и 70 на киррилице
 String Temp = "temp=" + String(roomTemperature);          
@@ -51,6 +56,10 @@ String statusSMS = security+"\n"+power+"\n"+Temp;
   // statusSMS - 87 символов 
 SIM800::sendSMS(responseMSISDN,statusSMS); // текст СМС}
 }
+
+roomHumidity   = dht.readHumidity();    
+roomTemperature = dht.readTemperature(); 
+
 void enableSecurity(String responseMSISDN) {
   if (isSecurityEnabled) {
     SIM800::sendSMS(responseMSISDN, "охрана уже включена");
